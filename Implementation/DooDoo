@@ -1,46 +1,76 @@
 Alex Gillespie, Connor Fulks, Luke Campbell, Brady Loos
 
-namespace Recursive
+using System;
+
+public static class DigitReducer
 {
-    public class RecursiveAddition
+
+    // We must break off the Least Significant Value from the long user input
+    public static int Fold(string n)
     {
-        static void Main(string[] args)
-        {
-            int num1, num2, finalNum;
+        n = Clean(n);
 
-            Console.WriteLine("Give me two numbers");
-            Int32.TryParse(Console.ReadLine(), out num1);
-            Int32.TryParse(Console.ReadLine(), out num2);
-            finalNum = num1 + num2;
-            string finalString = RecursionMath(finalNum);
-            Console.WriteLine(finalNum);
-        }
-        // Method that recursively grabs a string and adds the least sig digit
-        public static string RecursionMath(int num)
-        {
-            string newNum = String.Empty;
-            try
-            {
-                newNum = Convert.ToString(num);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-            char[] nums = newNum.ToCharArray();
+        if (n.Length == 1)
+            return n[0] - '0';
 
-            int numToAdd = nums[nums.Length - 1];
-            int tempNum = 0;
-            string remainingNum = String.Empty;
-            for (var i = 0; i < nums.Length - 2; i++)
-            {
-                remainingNum = "" + nums[i];
-            }
-            Int32.TryParse(remainingNum, out tempNum);
-            remainingNum += numToAdd;
-            return remainingNum;
-        }
+        string head = n[..^1];
+        int tail = n[^1] - '0';
+
+        string next = Add(head, tail);
+        return Fold(next);
     }
 
+    // Conduct the Add on the Least Significant Value and the input value
+    // Make sure we handle carries properly
+    // By breaking apart the initial input we are able to recurse through the initial string to 
+    // decipher carries and properly add the two values
+    private static string Add(string s, int d)
+    {
+        int carry = d;
+        char[] a = s.ToCharArray();
+
+        for (int i = a.Length - 1; i >= 0; i--)
+        {
+            int sum = (a[i] - '0') + carry;
+            a[i] = (char)('0' + (sum % 10));
+            carry = sum / 10;
+
+            if (carry == 0) break;
+        }
+
+        if (carry > 0)
+            return carry.ToString() + new string(a);
+
+        int k = 0;
+        while (k < a.Length - 1 && a[k] == '0') k++;
+        return new string(a, k, a.Length - k);
+    }
+
+    // Make sure we recieve valid input
+    // Throw exceptions for any doofus inputs
+    private static string Clean(string s)
+    {
+        if (s is null) throw new ArgumentNullException(nameof(s));
+        s = s.Trim();
+        if (s.Length == 0) throw new ArgumentException("Input cannot be empty.");
+
+        foreach (char c in s)
+            if (c < '0' || c > '9')
+                throw new ArgumentException("Input must contain only digits 0-9.");
+
+        int i = 0;
+        while (i < s.Length - 1 && s[i] == '0') i++;
+        return s[i..];
+    }
 }
-Doesn't work
+
+class Program
+{
+    static void Main()
+    {
+        Console.Write("Enter a number: ");
+        string input = Console.ReadLine() ?? "";
+        int result = DigitReducer.Fold(input);
+        Console.WriteLine($"Single digit result: {result}");
+    }
+}
